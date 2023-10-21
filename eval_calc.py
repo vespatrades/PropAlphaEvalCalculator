@@ -1,8 +1,21 @@
 # borrowing heavily from question/answer here:
 # https://codereview.stackexchange.com/questions/124449/simple-weighted-directed-graph-in-python
+import sys
 import math
 from pprint import pprint
 import numpy as np
+
+# Ensure that there are the correct number of arguments
+if len(sys.argv) != 6:
+    print("Usage: eval_calc.py <trailing_dd> <account_target> <stop_width> <tp_width> <win_pct>")
+    sys.exit(1)
+
+# Extract command line arguments
+trailing_dd = float(sys.argv[1])
+account_target = float(sys.argv[2])
+stop_width = float(sys.argv[3])
+tp_width = float(sys.argv[4])
+win_pct = float(sys.argv[5])
 
 # we have a trailing dd amount
 # we have an acct target amount
@@ -289,40 +302,13 @@ class WinLossDiGraph:
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # we have a trailing dd amount
-    print("Estimate odds of passing a prop eval with trailing drawdown \n"
-          "given a single setup with a defined bracket and win percentage.\n"
-          "Costs ignored. \n"
-          "NOT FINANCIAL ADVICE. \n"
-          "DO YOUR OWN RESEARCH. \n"
-          "NO GUARANTEE OUR MATH IS CORRECT. \n"
-          "RISK DISCLAIMER: https://www.prop-alpha.com/disclaimer")
-    while True:
-        # main program
-        trailing_dd = float(input("Enter Trailing Drawdown Amount in Currency: "))
-        # we have an acct target amount
-        account_target = float(input("Enter Account Target Amount in Currency: "))
-        # we have a risk, reward, win % for each trade
-        stop_width = float(input("Enter Stop Size in Currency: "))
-        tp_width = float(input("Enter Take Profit Size in Currency: "))
-        win_pct = float(input("Enter Estimated Win Percent: "))
-        num_loss = math.ceil(trailing_dd / stop_width)
-        num_win = math.ceil(account_target / stop_width)
-        rr_ratio = round(tp_width / stop_width, 1)
-        win_frac = win_pct/100.0
-        wldg = WinLossDiGraph()
-        wldg.build_graph_from_start_node_and_params(win_frac, rr_ratio, num_win, num_loss)
-        # wldg.print_graph()
-        wldg.generate_adj_matrix()
-        win_prob = wldg.get_win_prob_from_start_node()*100
-        print(f"Estimated Probability of Success: {win_prob:.1f}%")
-        while True:
-            answer = str(input('Run again? (y/n): '))
-            if answer in ('y', 'n'):
-                break
-            print("invalid input.")
-        if answer == 'y':
-            continue
-        else:
-            print("Goodbye")
-            break
+    win_frac = win_pct / 100.0
+    rr_ratio = round(tp_width / stop_width, 1)  # reward-to-risk ratio
+    num_win = math.ceil(account_target / stop_width)  # Number of wins needed to reach account target
+    num_loss = math.ceil(trailing_dd  / stop_width)  # Number of losses allowed before hitting trailing drawdown
+
+    wldg = WinLossDiGraph()
+    wldg.build_graph_from_start_node_and_params(win_frac, rr_ratio, num_win, num_loss)
+    wldg.generate_adj_matrix()
+    win_prob = wldg.get_win_prob_from_start_node() * 100
+    print(f"{win_prob:.1f}")
